@@ -938,8 +938,10 @@ input  { font-family: inherit; outline: none; border: none; }
 /* ─────────────────────────────────────────────
    CONFIG
 ───────────────────────────────────────────── */
-const WS_URL = `ws://${location.hostname}:3000`;
-
+   const WS_URL =
+  location.hostname === "localhost"
+    ? "ws://localhost:3000"
+    : "wss://videoapp-production.up.railway.app";
 const ICE = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
