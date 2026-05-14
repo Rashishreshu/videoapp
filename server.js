@@ -10,13 +10,34 @@ const { WebSocketServer } = require('ws');
 const http  = require('http');
 const fs    = require('fs');
 const path  = require('path');
+
+// ✅ Railway compatible port
 const PORT = process.env.PORT || 3000;
-// ── HTTP: serve index.html ──────────────────────────────
+
+// ── HTTP: serve index.html (and other files) ────────────
 const httpServer = http.createServer((req, res) => {
-  const filePath = path.join(__dirname, 'index.html');
+  // ✅ Serve index.html OR any requested file
+  let filePath = path.join(__dirname, req.url === '/' ? 'index.html' : req.url);
+
   fs.readFile(filePath, (err, data) => {
-    if (err) { res.writeHead(404); res.end('index.html not found'); return; }
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    if (err) {
+      res.writeHead(404);
+      res.end('File not found');
+      return;
+    }
+
+    // basic content-type handling
+    const ext = path.extname(filePath);
+    const typeMap = {
+      '.html': 'text/html',
+      '.js': 'application/javascript',
+      '.css': 'text/css'
+    };
+
+    res.writeHead(200, {
+      'Content-Type': typeMap[ext] || 'text/plain'
+    });
+
     res.end(data);
   });
 });
@@ -67,21 +88,18 @@ function handleMessage(ws, msg) {
         return;
       }
 
-      // Leave old room if any
       if (ws.roomId) handleLeave(ws);
 
       ws.roomId  = room;
       ws.peerName = name || `User ${peers.size + 1}`;
       peers.set(ws.peerId, { ws, name: ws.peerName });
 
-      // Tell joiner who is already in the room
       const others = [...peers.values()]
         .filter(p => p.ws.peerId !== ws.peerId)
         .map(p => ({ id: p.ws.peerId, name: p.name }));
 
       safeSend(ws, { type: 'joined', peerId: ws.peerId, room, peers: others });
 
-      // Notify existing peers
       broadcast(room, ws, { type: 'peer-joined', peerId: ws.peerId, name: ws.peerName });
 
       log(`[Room ${room}] ${ws.peerName} joined — ${peers.size}/2`);
@@ -91,7 +109,6 @@ function handleMessage(ws, msg) {
     case 'offer':
     case 'answer':
     case 'ice-candidate': {
-      // Relay to target peer or broadcast to room
       if (msg.to) {
         const peer = findPeer(msg.to);
         if (peer) safeSend(peer, { ...msg, from: ws.peerId });
@@ -141,6 +158,7 @@ function handleLeave(ws) {
   if (peers) {
     peers.delete(peerId);
     broadcast(roomId, ws, { type: 'peer-left', peerId, name: peerName });
+
     if (peers.size === 0) {
       rooms.delete(roomId);
       log(`[Room ${roomId}] empty, removed`);
@@ -175,7 +193,9 @@ function log(str) {
   const t = new Date().toISOString().slice(11, 19);
   console.log(`[${t}] ${str}`);
 }
-httpServer.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
 
+httpServer.listen(PORT, () => {
+  console.log('\n╔══════════════════════════════════════╗');
+  console.log(`║  🎥  Vōx running → http://localhost:${PORT}  ║`);
+  console.log('╚══════════════════════════════════════╝\n');
 });
