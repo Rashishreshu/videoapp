@@ -177,5 +177,5 @@ function log(str) {
 }
 httpServer.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-});
+
 });
