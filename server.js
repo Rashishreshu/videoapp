@@ -175,9 +175,7 @@ function log(str) {
   const t = new Date().toISOString().slice(11, 19);
   console.log(`[${t}] ${str}`);
 }
-
 httpServer.listen(PORT, () => {
-  console.log('\n╔══════════════════════════════════════╗');
-  console.log(`║  🎥  Vōx running → http://localhost:${PORT}  ║`);
-  console.log('╚══════════════════════════════════════╝\n');
+  console.log(`Server running on port ${PORT}`);
+});
 });
