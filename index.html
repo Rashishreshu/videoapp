@@ -938,11 +938,11 @@ input  { font-family: inherit; outline: none; border: none; }
 /* ─────────────────────────────────────────────
    CONFIG
 ───────────────────────────────────────────── */
-const WS_URL =
-  location.hostname === "localhost"
-    ? "ws://localhost:3000"
-    : `wss://${location.hostname}`;
-   
+// ✅ Updated: points to Railway deployment using secure WSS protocol.
+// The Railway URL uses HTTPS, so the WebSocket must use WSS (not WS).
+const WS_URL = 'wss://videoapp-production-5c89.up.railway.app';
+
+const ICE = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
@@ -1084,7 +1084,7 @@ joinBtn.onclick = async () => {
   try {
     await connectWS(room, name);
   } catch {
-    setLobbyStatus('Cannot reach the signaling server. Make sure server.js is running.', 'err');
+    setLobbyStatus('Cannot reach the signaling server. Make sure the Railway deployment is running.', 'err');
     joinBtn.disabled = false;
     return;
   }
